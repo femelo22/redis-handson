@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: api-redis
+  namespace: apiredis
 spec:
   replicas: 1
   selector:
@@ -14,32 +15,53 @@ spec:
     spec:
       containers:
         - name: api-redis
-          image: <seu-usuario>/<nome-da-imagem>:<tag>  # Substitua aqui
+          image: lfmelo/api-redis-k8s:latest
           ports:
             - containerPort: 8080
           env:
             - name: SPRING_DATASOURCE_URL
               valueFrom:
                 configMapKeyRef:
-                  name: api-config
+                  name: apiredis-config
                   key: SPRING_DATASOURCE_URL
             - name: SPRING_DATASOURCE_USERNAME
               valueFrom:
                 configMapKeyRef:
-                  name: api-config
+                  name: apiredis-config
                   key: SPRING_DATASOURCE_USERNAME
             - name: SPRING_DATASOURCE_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: db-secret
+                  name: apiredis-secret
                   key: SPRING_DATASOURCE_PASSWORD
-            - name: SPRING_DATA_REDIS_HOST
+            - name: REDIS_HOST
               valueFrom:
                 configMapKeyRef:
-                  name: api-config
-                  key: SPRING_DATA_REDIS_HOST
-            - name: SPRING_DATA_REDIS_PORT
+                  name: apiredis-config
+                  key: REDIS_HOST
+            - name: REDIS_PORT
               valueFrom:
                 configMapKeyRef:
-                  name: api-config
-                  key: SPRING_DATA_REDIS_PORT
+                  name: apiredis-config
+                  key: REDIS_PORT
+          livenessProbe: # Detecta se o app está saudável (senão, reinicia o container).
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 30  # Tempo para o app subir antes de começar o check
+            periodSeconds: 10         # Verifica a cada 10 segundos
+            failureThreshold: 3       # Se falhar 3 vezes seguidas, reinicia
+          readinessProbe: # Detecta se o app está pronto para receber tráfego (senão, remove do Service temporariamente).
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 10  # Começa a checar se está pronto após 10s
+            periodSeconds: 5         # Verifica a cada 5 segundos
+            failureThreshold: 2      # Se falhar 2 vezes, remove do load balancer
+          resources:
+            requests:
+              cpu: "200m" # ou 0.2
+              memory: "256Mi"
+            limits:
+              cpu: "500m" # ou 0.5
+              memory: "512Mi"

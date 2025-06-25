@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: apiredis-config
+  namespace: apiredis
+data:
+  SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/api-redis
+  SPRING_DATASOURCE_USERNAME: postgres
+  REDIS_HOST: redis
+  REDIS_PORT: "6379"

@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api-redis
+  template:
+    metadata:
+      labels:
+        app: api-redis
+    spec:
+      containers:
+        - name: api-redis
+          image: <seu-usuario>/<nome-da-imagem>:<tag>  # Substitua aqui
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SPRING_DATASOURCE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: api-config
+                  key: SPRING_DATASOURCE_URL
+            - name: SPRING_DATASOURCE_USERNAME
+              valueFrom:
+                configMapKeyRef:
+                  name: api-config
+                  key: SPRING_DATASOURCE_USERNAME
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-secret
+                  key: SPRING_DATASOURCE_PASSWORD
+            - name: SPRING_DATA_REDIS_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: api-config
+                  key: SPRING_DATA_REDIS_HOST
+            - name: SPRING_DATA_REDIS_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: api-config
+                  key: SPRING_DATA_REDIS_PORT
